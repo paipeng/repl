@@ -7,8 +7,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static javax0.repl.CommandDefinitionBuilder.start;
 
@@ -42,7 +44,7 @@ public class Repl implements Runnable {
             .help("Use the command 'exit' without parameters to exit from the REPL application")
             .executor(this::exitCommand)
         ).command(start().kw("help")
-            .parameters(Set.of())
+            .parameters(new HashSet<>(Arrays.asList()))
             .usage("help")
             .help("")
             .executor(this::helpCommand)
@@ -68,7 +70,7 @@ public class Repl implements Runnable {
                 return;
             }
             final Process process = getOsProcessObject(s);
-            final var sb = new StringBuilder();
+            final StringBuilder sb = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -105,8 +107,8 @@ public class Repl implements Runnable {
      * @return this
      */
     public Repl command(CommandDefinitionBuilderReady builder) {
-        final var def = builder.build();
-        for (final var cd : commandDefinitions) {
+        final CommandDefinition def = builder.build();
+        for (final CommandDefinition cd : commandDefinitions) {
             if (cd.keyword.toLowerCase().equals(def.keyword.toLowerCase())) {
                 commandDefinitions.remove(cd);
                 break;
@@ -134,7 +136,7 @@ public class Repl implements Runnable {
      * @return the string of the messages
      */
     private String fetchMessage() {
-        final var msg = message.message();
+        final String msg = message.message();
         message = new Message();
         return msg;
     }
@@ -145,7 +147,7 @@ public class Repl implements Runnable {
 
     private void exitCommand(CommandEnvironment env) {
         if (allowExit != null && !allowExit.apply(env)) {
-            if (env.parser().get("confirm", Set.of("yes")).isPresent()) {
+            if (env.parser().get("confirm",new HashSet<>(Arrays.asList("yes"))).isPresent()) {
                 shouldExit.set(true);
             } else {
                 env.message().warning("There is unsaved state in the application. Use 'exit confirm=yes'");
@@ -156,16 +158,16 @@ public class Repl implements Runnable {
     }
 
     private void helpCommand(CommandEnvironment env) {
-        final var w = env.console().writer();
+        final PrintWriter w = env.console().writer();
         if (env.parser().get(0).isPresent()) {
-            final var command = env.parser().get(0).get();
+            final String command = env.parser().get(0).get();
             if (aliases.containsKey(command.toLowerCase())) {
                 w.print(command + " is an alias of " + aliases.get(command.toLowerCase()) + "\n");
                 return;
             }
-            final var fakeEnv = new ReplCommandEnvironment(this);
+            final ReplCommandEnvironment fakeEnv = new ReplCommandEnvironment(this);
             keywordAndLine(fakeEnv, command);
-            final var cd = getCommand(fakeEnv);
+            final CommandDefinition cd = getCommand(fakeEnv);
             if (cd == null) {
                 w.print(command + " is unknown");
                 return;
@@ -240,15 +242,15 @@ public class Repl implements Runnable {
     }
 
     private void aliasCommand(CommandEnvironment env) {
-        final var alias = env.parser().get(0).orElse(null);
-        final var command = env.parser().get(1).orElse(null);
+        final String alias = env.parser().get(0).orElse(null);
+        final String command = env.parser().get(1).orElse(null);
         alias(alias, command);
         env.message().info(alias + " was set to alias " + command);
     }
 
     private void execFile(String fileName, LocalConsole console) {
         message.info("Executing '" + fileName + "'");
-        try (final var reader = new BufferedReader(new FileReader(fileName))) {
+        try (final BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().length() > 0) {
@@ -305,7 +307,7 @@ public class Repl implements Runnable {
      */
     public void run() {
         console = getConsole();
-        final var w = console.writer();
+        final PrintWriter w = console.writer();
         w.print(fetchMessage());
         if (args != null && args.length > 0) {
             execFile(args[0], console);
@@ -320,17 +322,18 @@ public class Repl implements Runnable {
         w.print(fetchMessage());
         w.flush();
         for (; ; ) {
-            final var rawLine = console.readLine(prompt);
+            final String rawLine = console.readLine(prompt);
             if (rawLine == null) {
                 return;
             }
-            final var line = rawLine.trim();
+            final String line = rawLine.trim();
             if (line.equalsIgnoreCase("")) {
                 continue;
             }
 
             if (line.trim().startsWith(".")) {
-                execFile(line.trim().substring(1).stripLeading(), console);
+                //execFile(line.trim().substring(1).stripLeading(), console);
+                execFile(line.trim().substring(1).replace(" ", ""), console);
                 continue;
             }
             if (line.startsWith("!")) {
@@ -359,7 +362,7 @@ public class Repl implements Runnable {
 
     private void executeStartupFile(LocalConsole console) {
         if (startupFile != null) {
-            final var file = new File(startupFile);
+            final File file = new File(startupFile);
             if (file.exists()) {
                 console.writer().print("Executing startup file " + file.getAbsolutePath());
                 execFile(file.getAbsolutePath(), console);
@@ -370,7 +373,7 @@ public class Repl implements Runnable {
     }
 
     private void execute(String line) {
-        final var env = new ReplCommandEnvironment(this);
+        final ReplCommandEnvironment env = new ReplCommandEnvironment(this);
         env.message = message;
         final String trimmedLine = line.trim();
         if (trimmedLine.length() == 0) {
@@ -378,7 +381,7 @@ public class Repl implements Runnable {
         }
         keywordAndLine(env, trimmedLine);
         seekAlias(env);
-        final var comDef = getCommand(env);
+        final CommandDefinition comDef = getCommand(env);
         if (comDef == null) {
             return;
         }
@@ -402,8 +405,8 @@ public class Repl implements Runnable {
     }
 
     private CommandDefinition getCommand(ReplCommandEnvironment env) {
-        final var kw = env.keyword().toLowerCase();
-        final var commands = commandDefinitions.stream()
+        final String kw = env.keyword().toLowerCase();
+        final List<CommandDefinition> commands = commandDefinitions.stream()
             .filter(command -> kwMatch(command, kw))
             .collect(Collectors.toList());
         if (commands.size() > 1) {
@@ -423,8 +426,8 @@ public class Repl implements Runnable {
 
     private boolean matchRegexes(ReplCommandEnvironment env, Map<String, Pattern> regexes) {
         if (regexes != null) {
-            for (final var entry : regexes.entrySet()) {
-                final var matcher = entry.getValue().matcher(env.line());
+            for (final Map.Entry<String, Pattern> entry : regexes.entrySet()) {
+                final Matcher matcher = entry.getValue().matcher(env.line());
                 if (matcher.matches()) {
                     env.matcher = matcher;
                     env.matcherId = entry.getKey();
@@ -441,7 +444,7 @@ public class Repl implements Runnable {
     }
 
     private void keywordAndLine(ReplCommandEnvironment env, String line) {
-        final var spaceIndex = line.indexOf(" ");
+        final int spaceIndex = line.indexOf(" ");
         if (spaceIndex == -1) {
             env.keyword = line;
         } else {

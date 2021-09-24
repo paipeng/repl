@@ -33,17 +33,17 @@ public class ParameterParser {
      * @throws IllegalArgumentException if the line is not properly formatted
      */
     static ParameterParser parse(String line, Set<String> parameters) {
-        final var it = new ParameterParser();
-        final var parts = line.split("\\s+");
-        for (final var part : parts) {
-            final var eq = part.indexOf("=");
+        final ParameterParser it = new ParameterParser();
+        final String[] parts = line.split("\\s+");
+        for (final String part : parts) {
+            final int eq = part.indexOf("=");
             if (eq == -1) {
                 if (part.length() > 0) {
                     it.values.add(part);
                 }
             } else {
-                final var key = part.substring(0, eq);
-                final var value = part.substring(eq + 1);
+                final String key = part.substring(0, eq);
+                final String value = part.substring(eq + 1);
                 it.keys.put(findIt(key, parameters), value);
             }
         }
@@ -55,7 +55,7 @@ public class ParameterParser {
             return prefix;
         }
         final List<String> commandsFound = new ArrayList<>();
-        for (final var s : set) {
+        for (final String s : set) {
             if (s.toLowerCase().startsWith(prefix.toLowerCase())) {
                 commandsFound.add(s);
             }
@@ -82,8 +82,8 @@ public class ParameterParser {
      * was not present on the command
      */
     public Optional<String> get(String key, Set<String> values) {
-        final var value = get(key);
-        if (value.isEmpty()) {
+        final Optional<String> value = get(key);
+        if (value == null || value.get() == null) {
             return Optional.empty();
         } else {
             return Optional.ofNullable(findIt(value.get(), values));
@@ -137,8 +137,8 @@ public class ParameterParser {
      * @return the value for the key
      */
     public String getOrDefault(String key, String def, Set<String> values) {
-        final var value = get(key);
-        if (value.isEmpty()) {
+        final Optional<String> value = get(key);
+        if (value == null || value.get() == null) {
             return def;
         }
         return findIt(value.get(), values);

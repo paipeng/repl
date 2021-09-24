@@ -24,7 +24,7 @@ public class Message {
     }
 
     public String message() {
-        final var sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         errors.forEach(s -> sb.append("[ERROR] ").append(s).append("\n"));
         warnings.forEach(s -> sb.append("[WARNING] ").append(s).append("\n"));
         infos.forEach(s -> sb.append("[INFO] ").append(s).append("\n"));

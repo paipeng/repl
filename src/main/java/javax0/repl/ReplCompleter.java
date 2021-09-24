@@ -8,10 +8,7 @@ import org.jline.reader.ParsedLine;
 import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +40,7 @@ class ReplCompleter implements Completer {
     }
 
     private final static CommandDefinition EMPTY_COMMAND_DEFINITION = new CommandDefinition(
-        null, Set.of(), null, null, null, null);
+        null, new HashSet<>(Arrays.asList()), null, null, null, null);
 
     @Override
     public void complete(LineReader lineReader, ParsedLine parsedLine, List<Candidate> list) {

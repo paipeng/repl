@@ -9,7 +9,7 @@ class MessageTest {
     @Test
     @DisplayName("Test the message issuing and retrieving")
     void testMessage() {
-        final var msg = new Message();
+        final Message msg = new Message();
         msg.error("Error message");
         msg.warning("Warning message");
         msg.info("Info message");

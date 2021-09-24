@@ -24,7 +24,7 @@ public class CommandDefinitionBuilderFluenterTest {
     }
 
     public static FluentBuilder sourceBuilderGrammar() {
-        var klass = FluentBuilder.from(CommandDefinitionBuilder.class);
+        FluentBuilder klass = FluentBuilder.from(CommandDefinitionBuilder.class);
         return klass
             .one("kw")
             .optional(klass.oneOf(klass.one("noParameters"), klass.one("parameters"), klass.oneOrMore("parameter")))

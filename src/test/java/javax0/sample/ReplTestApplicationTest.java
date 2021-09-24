@@ -3,6 +3,9 @@ package javax0.sample;
 import javax0.repl.CommandEnvironment;
 import javax0.repl.Repl;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static javax0.repl.CommandDefinitionBuilder.start;
@@ -59,12 +62,12 @@ class ReplTestApplicationTest {
 
     private void absCommand(CommandEnvironment env) {
         if (env.matcherId().equals("polar")) {
-            final var abs = Integer.parseInt(env.matcher().group(1));
+            final int abs = Integer.parseInt(env.matcher().group(1));
             env.message().info("" + abs);
         } else {
-            final var real = Integer.parseInt(env.matcher().group(1));
-            final var imag = Integer.parseInt(env.matcher().group(2));
-            final var abs = Math.sqrt(real * real + imag * imag);
+            final int real = Integer.parseInt(env.matcher().group(1));
+            final int imag = Integer.parseInt(env.matcher().group(2));
+            final double abs = Math.sqrt(real * real + imag * imag);
             env.message().info("" + abs);
         }
     }
@@ -72,23 +75,23 @@ class ReplTestApplicationTest {
     private void myAlias(CommandEnvironment env) {
         env.console().writer().print("This is my alias!!!\n");
         env.console().writer().flush();
-        final var alias = env.parser().get(0).orElse(null);
-        final var command = env.parser().get(1).orElse(null);
+        final String alias = env.parser().get(0).orElse(null);
+        final String command = env.parser().get(1).orElse(null);
         sut.alias(alias, command);
         env.message().info(alias + " was really set to alias " + command);
     }
 
     private void returnCommand(CommandEnvironment env) {
-        final var delay = env.parser().get("delayed");
+        final Optional<String> delay = env.parser().get("delayed");
         if (delay.isPresent()) {
             try {
                 Thread.sleep(Integer.parseInt(delay.get()));
             } catch (InterruptedException ignored) {
             }
         }
-        final var output = env.parser().get("output", Set.of("yes", "no"));
+        final Optional<String> output = env.parser().get("output", new HashSet<>(Arrays.asList("yes", "no")));
         if (output.isPresent() && output.get().equals("yes")) {
-            final var text = env.parser().getOrDefault("text", "");
+            final String text = env.parser().getOrDefault("text", "");
             env.message().info(text);
         }
     }

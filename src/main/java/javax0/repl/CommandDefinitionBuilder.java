@@ -1,11 +1,8 @@
 package javax0.repl;
 
-import javax0.geci.annotations.Geci;
+//import javax0.geci.annotations.Geci;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -13,7 +10,7 @@ import java.util.regex.Pattern;
  * A command definition builder that can be used to create a command definition. This is  the builder to be used to
  * create the argument to the {@link Repl#command(CommandDefinitionBuilderReady)} method.
  */
-@Geci("fluent definedBy='javax0.repl.CommandDefinitionBuilderFluenterTest::sourceBuilderGrammar'")
+//@Geci("fluent definedBy='javax0.repl.CommandDefinitionBuilderFluenterTest::sourceBuilderGrammar'")
 public class CommandDefinitionBuilder {
     private String keyword;
     private Set<String> parameters;
@@ -52,7 +49,7 @@ public class CommandDefinitionBuilder {
 
     private void noParameters() {
         if (parameters == null) {
-            this.parameters = new HashSet<>(Set.of());
+            this.parameters = new HashSet<>(Arrays.asList());
         } else {
             throw new IllegalArgumentException(
                 "You cannot define parameters and noParameters for the same command");
@@ -61,7 +58,7 @@ public class CommandDefinitionBuilder {
 
     private void parameter(String parameter) {
         if (parameters == null) {
-            this.parameters = new HashSet<>(Set.of(parameter));
+            this.parameters = new HashSet<>(Arrays.asList(parameter));
         } else {
             this.parameters.add(parameter);
         }
